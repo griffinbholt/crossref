@@ -1,4 +1,4 @@
+
 class Document():
-    def __init__(self):
-        pass  # TODO
-    
+    def __init__(self, textfile: str):
+        
