@@ -69,7 +69,7 @@ class Document():
         self._parse_subdirectory(dirname, self.structured)
 
     def _parse_subdirectory(self, dirname: str, document: DocumentJSON):
-        document['title'] = self._parse_subdir_title(dirname)
+        document['title'] = self._parse_path_title(dirname)
         document['contents'] = []
 
         for filename in sorted(os.listdir(dirname)):
@@ -79,42 +79,49 @@ class Document():
                 document['contents'].append(new_document)
                 self._parse_subdirectory(path, new_document)
             elif os.path.isfile(path):
+                title: str = self._parse_path_title(path)
                 with open(path, 'r') as file:
-                    lines = file.readlines()
-                lines = [line.strip() for line in lines]
-                document['contents'] += lines
-                self.passages += lines
+                    contents = [line.strip() for line in file.readlines()]
+                new_document = DocumentJSON(title=title, contents=contents)
+                document['contents'].append(new_document)
+                self.passages += contents
 
-    def _parse_subdir_title(self, dirname: str) -> str:
-        title: str = dirname.split('/')[-1]
-        if dirname[0].isdigit():
+    def _parse_path_title(self, path: str) -> str:
+        title: str = path.split('/')[-1]
+        if title[0].isdigit():
             title = title.split('_', 1)[1]
+        if title.endswith('.txt'):
+            title = title[:-4]
         return title.replace('_', ' ')
 
-def save_to_subdirectory(parentdir: str, document: DocumentJSON):
-    title = document['title']
+def save_to_subdirectory(parentdir: str, document: DocumentJSON, j: int = 0):
+    title = document['title'].replace(' ', '_')
     contents = document['contents']
 
-    for content in contents:
+    for i, content in enumerate(contents):
         if isinstance(content, str):
-            with open(f"{parentdir}/{title}.txt", 'a+') as file:
-                file.write(content)
+            with open(f"{parentdir}/{j:02d}_{title}.txt", 'a+') as file:
+                file.write(f"{content}\n")
         else:
-            subdir = f"{parentdir}/{title}"
+            subdir = f"{parentdir}/{j:02d}_{title}"
             if not os.path.exists(subdir):
                 os.makedirs(subdir)
-            save_to_subdirectory(subdir, content)
+            save_to_subdirectory(subdir, content, i)
 
 
 def main():
     import os
-    filename = os.path.expanduser('~/crossref/documents/bookofmormon.md')
-    doc = Document(filename, InputFormat.MARKDOWN)
-    save_to_subdirectory('/Users/griffinbholt/crossref/documents', doc.structured)
-    # print_json_to_depth(doc.structured, depth=4)
+    # filename = os.path.expanduser('~/crossref/documents/bookofmormon.md')
+    # doc = Document(filename, InputFormat.MARKDOWN)
+    # save_to_subdirectory('/Users/griffinbholt/crossref/documents', doc.structured)
+
+    dirname = os.path.expanduser('~/crossref/documents/Book_of_Mormon')
+    doc = Document(dirname, InputFormat.DIRECTORY)
+    print_json_to_depth(doc.structured, depth=4)
     # for passage in doc.passages[-10:]:
     #     print(f"{passage}\n\n")
     # print(len(doc.passages))
+
 
 if __name__ == main():
     main()
