@@ -7,8 +7,8 @@ from utils import print_json_to_depth
 
 
 class InputFormat(Enum):
-    MARKDOWN = 0
-    DIRECTORY = 1
+    MARKDOWN = 'markdown'
+    DIRECTORY = 'directory'
 
 class DocumentJSON(TypedDict, total=False):
     title: str
@@ -96,21 +96,21 @@ class Document():
         return title.replace('_', ' ')
 
 
-def main():
-    filename = os.path.expanduser('~/crossref/documents/bookofmormon.md')
-    markdown_doc = Document(filename, InputFormat.MARKDOWN)
-    print_json_to_depth(markdown_doc.structured, depth=4)
-    for passage in markdown_doc.passages[-10:]:
-        print(f"{passage}\n\n")
-    print(len(markdown_doc))
+# def main():
+#     filename = os.path.expanduser('~/crossref/documents/bookofmormon.md')
+#     markdown_doc = Document(filename, InputFormat.MARKDOWN)
+#     print_json_to_depth(markdown_doc.structured, depth=4)
+#     for passage in markdown_doc.passages[-10:]:
+#         print(f"{passage}\n\n")
+#     print(len(markdown_doc))
 
-    dirname = os.path.expanduser('~/crossref/documents/Book_of_Mormon')
-    dir_doc = Document(dirname, InputFormat.DIRECTORY)
-    print_json_to_depth(dir_doc.structured, depth=4)
-    for passage in dir_doc.passages[-10:]:
-        print(f"{passage}\n\n")
-    print(len(dir_doc))
+#     dirname = os.path.expanduser('~/crossref/documents/Book_of_Mormon')
+#     dir_doc = Document(dirname, InputFormat.DIRECTORY)
+#     print_json_to_depth(dir_doc.structured, depth=4)
+#     for passage in dir_doc.passages[-10:]:
+#         print(f"{passage}\n\n")
+#     print(len(dir_doc))
 
 
-if __name__ == main():
-    main()
+# if __name__ == main():
+#     main()

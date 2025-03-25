@@ -1,4 +1,4 @@
-# crossref
+# CrossRef
 Python package for automated document cross-referencing
 
 

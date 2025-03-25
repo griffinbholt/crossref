@@ -1,0 +1,15 @@
+documents:
+  - path: ~/crossref/tests/documents/bookofmormon.md
+    format: markdown
+metrics:
+  - name: 'ngram'
+    min_n: 1
+    max_n: 10
+    custom_stopphrases: [
+      'ye',
+      'yea',
+      'and it came to pass',
+    ]
+  - name: 'sentencetransformer'
+    modelname: 'all-mpnet-base-v2'
+    similarity_fn: 'cosine'

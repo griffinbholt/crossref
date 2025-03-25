@@ -2,17 +2,16 @@ from nltk.corpus import stopwords
 from nltk.util import ngrams
 from nltk.tokenize import word_tokenize
 import string
-import sys
 
-from crossref.scorer.base import SimilarityScorer
+from crossref.metrics.base import SimilarityMetric
 
 
-class WordSimilarityScorer(SimilarityScorer):
+class SyntacticSimilarityMetric(SimilarityMetric):
     def __init__(self):
         pass
 
 
-class NGramScorer(WordSimilarityScorer):
+class NGramMetric(SyntacticSimilarityMetric):
     def __init__(self, n_min: int, n_max: int, custom_stopphrases: list[str]):
         super().__init__()
         self.n_min: int = n_min
@@ -78,36 +77,36 @@ class NGramScorer(WordSimilarityScorer):
         return text_ngrams
 
 
-class FuzzyNGramScorer(WordSimilarityScorer):
+class FuzzyNGramMetric(SyntacticSimilarityMetric):
     def __init__(self):
         super().__init__()
     
     def score(self, text1: str, text2: str) -> float:
-        pass
+        raise NotImplementedError()  # TODO
 
 
-def main(i: int, j: int):
-    custom_stopphrases = [
-        'ye',
-        'yea',
-        'and it came to pass',
-    ]  # TODO: You could automate custom stopphrases by removing the most common ngrams from the document already
-    ngram_scorer = NGramScorer(n_min=1, n_max=10, custom_stopphrases=custom_stopphrases)
-    texts: list[str] = [
-        "For it is expedient that there should be a great and last sacrifice; yea, not a sacrifice of man, neither of beast, neither of any manner of fowl; for it shall not be a human sacrifice; but it must be an infinite and eternal sacrifice.",
-        "And behold, this is the whole meaning of the law, every whit pointing to that great and last sacrifice; and that great and last sacrifice will be the Son of God, yea, infinite and eternal.",
-        "But behold, the Spirit hath said this much unto me, saying: Cry unto this people, saying Repent ye, and prepare the way of the Lord, and walk in his paths, which are straight; for behold, the kingdom of heaven is at hand, and the Son of God cometh upon the face of the earth.",
-        "And saying, Repent ye: for the kingdom of heaven is at hand.",
-        "For this is he that was spoken of by the prophet Esaias, saying, The voice of one crying in the wilderness, Prepare ye the way of the Lord, make his paths straight.",
-    ]
+# def main(i: int, j: int):
+#     custom_stopphrases = [
+#         'ye',
+#         'yea',
+#         'and it came to pass',
+#     ]  # TODO: You could automate custom stopphrases by removing the most common ngrams from the document already
+#     ngram_scorer = NGramScorer(n_min=1, n_max=10, custom_stopphrases=custom_stopphrases)
+#     texts: list[str] = [
+#         "For it is expedient that there should be a great and last sacrifice; yea, not a sacrifice of man, neither of beast, neither of any manner of fowl; for it shall not be a human sacrifice; but it must be an infinite and eternal sacrifice.",
+#         "And behold, this is the whole meaning of the law, every whit pointing to that great and last sacrifice; and that great and last sacrifice will be the Son of God, yea, infinite and eternal.",
+#         "But behold, the Spirit hath said this much unto me, saying: Cry unto this people, saying Repent ye, and prepare the way of the Lord, and walk in his paths, which are straight; for behold, the kingdom of heaven is at hand, and the Son of God cometh upon the face of the earth.",
+#         "And saying, Repent ye: for the kingdom of heaven is at hand.",
+#         "For this is he that was spoken of by the prophet Esaias, saying, The voice of one crying in the wilderness, Prepare ye the way of the Lord, make his paths straight.",
+#     ]
 
-    import time
-    start = time.time()
-    score, ngrams = ngram_scorer.score(texts[i], texts[j], return_full=True)
-    print("Time Elapsed: ", time.time() - start)
-    print("Score: ", score)
-    print("N-Grams:", ngrams)
+#     import time
+#     start = time.time()
+#     score, ngrams = ngram_scorer.score(texts[i], texts[j], return_full=True)
+#     print("Time Elapsed: ", time.time() - start)
+#     print("Score: ", score)
+#     print("N-Grams:", ngrams)
 
 
-if __name__ == "__main__":
-    main(int(sys.argv[1]), int(sys.argv[2]))
+# if __name__ == "__main__":
+#     main(int(sys.argv[1]), int(sys.argv[2]))
