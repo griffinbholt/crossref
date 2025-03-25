@@ -1,16 +1,18 @@
 import numpy as np
 import torch
 
-from gensim.models.doc2vec import Doc2Vec, TaggedDocument
+# from gensim.models.doc2vec import Doc2Vec, TaggedDocument
 from sentence_transformers import SentenceTransformer, SimilarityFunction
 
-from comparison import ComparisonScorer
+from crossref.scorer.base import SimilarityScorer
 
-class SemanticComparisonScorer(ComparisonScorer):
+
+class SemanticSimilarityScorer(SimilarityScorer):
     def __init__(self):
         pass
 
-class SentenceTransformerScorer(SemanticComparisonScorer):
+
+class SentenceTransformerScorer(SemanticSimilarityScorer):
     """
         https://www.sbert.net/docs/sentence_transformer/usage/semantic_textual_similarity.html
 
@@ -37,7 +39,7 @@ class SentenceTransformerScorer(SemanticComparisonScorer):
         return self.model.similarity(embeddings1, embeddings2)
 
 
-class Doc2VecScorer(SemanticComparisonScorer):
+class Doc2VecScorer(SemanticSimilarityScorer):
     """
     https://radimrehurek.com/gensim/models/doc2vec.html
     https://spotintelligence.com/2023/09/06/doc2vec/
@@ -64,6 +66,7 @@ def main():
     score = ngram_scorer.score_multiple(texts, texts)
     print("Time Elapsed: ", time.time() - start)
     print("Score:\n", score)
+
 
 if __name__ == "__main__":
     main()

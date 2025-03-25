@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 
-class ComparisonScorer(ABC):
+class SimilarityScorer(ABC):
     def __init__(self):
         pass
 

@@ -5,6 +5,7 @@ from enum import Enum
 
 from utils import print_json_to_depth
 
+
 class InputFormat(Enum):
     MARKDOWN = 0
     DIRECTORY = 1

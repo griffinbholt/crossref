@@ -4,14 +4,15 @@ from nltk.tokenize import word_tokenize
 import string
 import sys
 
-from comparison import ComparisonScorer
+from crossref.scorer.base import SimilarityScorer
 
 
-class WordComparisonScorer(ComparisonScorer):
+class WordSimilarityScorer(SimilarityScorer):
     def __init__(self):
         pass
 
-class NGramScorer(WordComparisonScorer):
+
+class NGramScorer(WordSimilarityScorer):
     def __init__(self, n_min: int, n_max: int, custom_stopphrases: list[str]):
         super().__init__()
         self.n_min: int = n_min
@@ -76,7 +77,8 @@ class NGramScorer(WordComparisonScorer):
         text_ngrams: dict[int, set[tuple[str, ...]]] =  {n: set(ngrams(tokens, n)) - self.stopgrams[n] for n in range(self.n_min, self.n_max + 1)}
         return text_ngrams
 
-class FuzzyNGramScorer(WordComparisonScorer):
+
+class FuzzyNGramScorer(WordSimilarityScorer):
     def __init__(self):
         super().__init__()
     
@@ -105,6 +107,7 @@ def main(i: int, j: int):
     print("Time Elapsed: ", time.time() - start)
     print("Score: ", score)
     print("N-Grams:", ngrams)
+
 
 if __name__ == "__main__":
     main(int(sys.argv[1]), int(sys.argv[2]))
