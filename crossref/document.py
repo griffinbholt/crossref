@@ -18,18 +18,18 @@ Contents = list[str | DocumentJSON]
 
 
 class Document():
-    def __init__(self, path: str, input_format: InputFormat):
-        self.structured: DocumentJSON = DocumentJSON()
-        self.passages: list[str] = []
-
+    def __init__(self, pathname: str, format: InputFormat):
         parse_methods: dict[InputFormat, Callable[[str], None]] = {
             InputFormat.MARKDOWN: self._parse_markdown_file,
             InputFormat.DIRECTORY: self._parse_directory
         }
-        load_document: Callable[[str], None] = parse_methods.get(input_format)
-        if load_document is None:
-            raise ValueError(f"Unsupported input format: {input_format}")
-        load_document(path)
+        if format not in parse_methods:
+            raise ValueError(f"Unsupported input format: {format}")
+
+        self.structured: DocumentJSON = DocumentJSON()
+        self.passages: list[str] = []
+        load_document: Callable[[str], None] = parse_methods.get(format)
+        load_document(pathname)
 
     @property
     def title(self) -> str:
@@ -94,33 +94,21 @@ class Document():
             title = title[:-4]
         return title.replace('_', ' ')
 
-def save_to_subdirectory(parentdir: str, document: DocumentJSON, j: int = 0):
-    title = document['title'].replace(' ', '_')
-    contents = document['contents']
-
-    for i, content in enumerate(contents):
-        if isinstance(content, str):
-            with open(f"{parentdir}/{j:02d}_{title}.txt", 'a+') as file:
-                file.write(f"{content}\n")
-        else:
-            subdir = f"{parentdir}/{j:02d}_{title}"
-            if not os.path.exists(subdir):
-                os.makedirs(subdir)
-            save_to_subdirectory(subdir, content, i)
-
 
 def main():
-    import os
-    # filename = os.path.expanduser('~/crossref/documents/bookofmormon.md')
-    # doc = Document(filename, InputFormat.MARKDOWN)
-    # save_to_subdirectory('/Users/griffinbholt/crossref/documents', doc.structured)
+    filename = os.path.expanduser('~/crossref/documents/bookofmormon.md')
+    markdown_doc = Document(filename, InputFormat.MARKDOWN)
+    print_json_to_depth(markdown_doc.structured, depth=4)
+    for passage in markdown_doc.passages[-10:]:
+        print(f"{passage}\n\n")
+    print(len(markdown_doc))
 
     dirname = os.path.expanduser('~/crossref/documents/Book_of_Mormon')
-    doc = Document(dirname, InputFormat.DIRECTORY)
-    print_json_to_depth(doc.structured, depth=4)
-    # for passage in doc.passages[-10:]:
-    #     print(f"{passage}\n\n")
-    # print(len(doc.passages))
+    dir_doc = Document(dirname, InputFormat.DIRECTORY)
+    print_json_to_depth(dir_doc.structured, depth=4)
+    for passage in dir_doc.passages[-10:]:
+        print(f"{passage}\n\n")
+    print(len(dir_doc))
 
 
 if __name__ == main():

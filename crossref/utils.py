@@ -1,3 +1,5 @@
+import os
+
 def print_json_to_depth(data, depth=1, indent=0):
     """
     Recursively print a JSON-like dictionary to a specified depth.
@@ -41,3 +43,18 @@ def print_json_to_depth(data, depth=1, indent=0):
     else:
         # For simple types, just print directly
         print(f"{indent_str}{data}")
+
+
+def save_to_subdirectory(parentdir: str, document: 'DocumentJSON', j: int = 0):
+    title = document['title'].replace(' ', '_')
+    contents = document['contents']
+
+    for i, content in enumerate(contents):
+        if isinstance(content, str):
+            with open(f"{parentdir}/{j:02d}_{title}.txt", 'a+') as file:
+                file.write(f"{content}\n")
+        else:
+            subdir = f"{parentdir}/{j:02d}_{title}"
+            if not os.path.exists(subdir):
+                os.makedirs(subdir)
+            save_to_subdirectory(subdir, content, i)
