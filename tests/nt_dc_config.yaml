@@ -1,7 +1,9 @@
-# Configuration file for cross-referencing the Book of Mormon against itself
+# Configuration file for cross-referencing the New Testament against the Doctrine & Covenants
 
 documents:
-  - path: ~/crossref/tests/documents/bookofmormon.md
+  - path: ~/crossref/tests/documents/kjvnewtestament.md
+    format: markdown
+  - path: ~/crossref/tests/documents/doctrineandcovenants.md
     format: markdown
 metrics:
   - name: 'ngram'
