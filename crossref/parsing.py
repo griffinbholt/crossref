@@ -3,8 +3,6 @@ import os
 from typing import Callable, TypedDict
 from enum import Enum
 
-from utils import print_json_to_depth
-
 
 class InputFormat(Enum):
     MARKDOWN = 'markdown'

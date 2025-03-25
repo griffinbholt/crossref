@@ -29,7 +29,7 @@ class SentenceTransformerMetric(SemanticSimilarityMetric):
         similarity: torch.Tensor = self._similarity(text1, text2)
         return similarity.item()
 
-    def score_multiple(self, texts1: list[str], texts2: list[str]) -> np.ndarray:
+    def score_all(self, texts1: list[str], texts2: list[str]) -> np.ndarray:
         similarities: torch.Tensor = self._similarity(texts1, texts2)
         return similarities.numpy()
 

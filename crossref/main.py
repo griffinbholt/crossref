@@ -4,8 +4,7 @@ import yaml
 
 from parsing import Document, InputFormat
 from metrics.base import SimilarityMetric
-# from metrics.semantic import SentenceTransformerMetric
-# from metrics.syntactic import NGramScorer
+
 
 def main():
     args: argparse.Namespace = parse_args()
@@ -44,6 +43,8 @@ def load_metrics(config: dict) -> list[SimilarityMetric]:
     metrics: list[SimilarityMetric] = []
     for metric_config in config['metrics']:
         metric_type: str = metric_config['type']
+
+        # Late imports to prevent unnecessary imports
         if metric_type == 'sentencetransformer':
             from metrics.semantic import SentenceTransformerMetric
             metrics.append(SentenceTransformerMetric(metric_config['modelname']))
@@ -52,6 +53,7 @@ def load_metrics(config: dict) -> list[SimilarityMetric]:
             metrics.append(NGramMetric(metric_config['n_min'], metric_config['n_max'], metric_config['custom_stopphrases']))
         else:
             raise NotImplementedError(f"Unsupported metric type: {metric_type}")
+
     return metrics
 
 
