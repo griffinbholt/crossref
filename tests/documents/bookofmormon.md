@@ -1,4 +1,4 @@
-# Book of Mormon
+# The Book of Mormon
 
 ## Title Page
 
