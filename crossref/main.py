@@ -2,16 +2,23 @@ import argparse
 import os
 import yaml
 
-from crossref.documents import Document, InputFormat
-from crossref.metrics.base import SimilarityMetric
+from preprocessing import generate_preprocessing_pipeline
+from documents import Document, InputFormat
+from metrics.base import SimilarityMetric
 
+def extract_unique_characters(strings):
+    unique_characters = set()
+    for string in strings:
+        unique_characters.update(string)
+    return sorted(unique_characters)
 
 def main():
     args: argparse.Namespace = parse_args()
     config: dict = load_config(args.config)
     documents: list[Document] = load_documents(config)
-    metrics: list[SimilarityMetric] = load_metrics(config)
-    # TODO - Clean the sources
+    chars = extract_unique_characters(documents[0].passages)
+    print(chars)
+    # metrics: list[SimilarityMetric] = load_metrics(config)
     # TODO - Start the various subprocess (in a queue for parallel processing?)
     # TODO - Compile the reports
     # TODO - Caching results
@@ -34,8 +41,9 @@ def load_documents(config: dict) -> list[Document]:
     documents: list[Document] = []
     for doc_config in config['documents']:
         document = Document(
-            path=os.path.expanduser(doc_config['path']),
-            format=InputFormat[doc_config['format']]
+            pathname=os.path.expanduser(doc_config['pathname']),
+            format=InputFormat(doc_config['format']),
+            preprocess_fn=generate_preprocessing_pipeline(config)
         )
         documents.append(document)
     return documents

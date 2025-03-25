@@ -28,6 +28,7 @@ classifiers = [
 
 # TODO: Determine versions
 dependencies = [
+    "compose",                # preprocessing.py
     "gensim",                 # semantic.py
     "nltk",                   # syntactic.py
     "numpy",                  # base.py, semantic.py

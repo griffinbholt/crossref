@@ -1,10 +1,11 @@
 # Configuration file for cross-referencing the New Testament against the Doctrine & Covenants
 
 documents:
-  - path: ~/crossref/tests/documents/kjvnewtestament.md
+  - pathname: ~/crossref/tests/documents/kjvnewtestament.md
     format: markdown
-  - path: ~/crossref/tests/documents/doctrineandcovenants.md
+  - pathname: ~/crossref/tests/documents/doctrineandcovenants.md
     format: markdown
+
 metrics:
   - name: 'ngram'
     min_n: 1
@@ -12,10 +13,16 @@ metrics:
     custom_stopphrases: [
       'ye',
       'yea',
-      'and it came to pass',
+      'and it came to pass'
     ]
   - name: 'sentencetransformer'
     modelname: 'all-mpnet-base-v2'
     similarity_fn: 'cosine'
-preprocessing: # TODO
+
+preprocessing: # To be applied for all metrics, in the order listed below
+  - replace_punctuation:
+      - ['’', "'"]  # Replace right single quote with apostrophe
+      - ['—', ' ']  # Replace em-dash with space
+  - remove_extra_spaces: true
+
 reports: # TODO 

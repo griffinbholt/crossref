@@ -29,6 +29,9 @@ class NGramMetric(SyntacticSimilarityMetric):
             return score, common_ngrams
         return score
 
+    def score_all(self, texts1, texts2, return_full: bool = False):
+        raise NotImplementedError()  # TODO - Cache the ngrams
+
     def _find_common_ngrams(
             self,
             text1: str,
