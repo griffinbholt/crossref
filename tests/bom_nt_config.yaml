@@ -17,5 +17,10 @@ metrics:
   - name: 'sentencetransformer'
     modelname: 'all-mpnet-base-v2'
     similarity_fn: 'cosine'
-preprocessing: # TODO
+preprocessing:
+  - replace_punctuation:
+    - ['’', "'"]
+  - remove_punctuation: true
+    keep_punctuation_set: "'"
+  - lowercase: true
 reports: # TODO 

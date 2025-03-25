@@ -15,5 +15,8 @@ metrics:
   - name: 'sentencetransformer'
     modelname: 'all-mpnet-base-v2'
     similarity_fn: 'cosine'
-preprocessing: # TODO
+preprocessing:  # To be applied for all metrics
+  - replace_punctuation:
+    - ['’', "'"]  # Replace right single quote with apostrophe
+    - ['—', ' ']  # Replace em-dash with space
 reports: # TODO 

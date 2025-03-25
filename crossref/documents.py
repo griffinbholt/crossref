@@ -93,22 +93,29 @@ class Document():
             title = title[:-4]
         return title.replace('_', ' ')
 
+def extract_unique_characters(strings):
+    unique_characters = set()
+    for string in strings:
+        unique_characters.update(string)
+    return sorted(unique_characters)
 
-# def main():
-#     filename = os.path.expanduser('~/crossref/documents/bookofmormon.md')
-#     markdown_doc = Document(filename, InputFormat.MARKDOWN)
-#     print_json_to_depth(markdown_doc.structured, depth=4)
-#     for passage in markdown_doc.passages[-10:]:
-#         print(f"{passage}\n\n")
-#     print(len(markdown_doc))
+def main():
+    filename = os.path.expanduser('~/crossref/tests/documents/bookofmormon.md')
+    markdown_doc = Document(filename, InputFormat.MARKDOWN)
+    chars = extract_unique_characters(markdown_doc.passages)
+    print(chars)
+    # print_json_to_depth(markdown_doc.structured, depth=4)
+    # for passage in markdown_doc.passages[-10:]:
+    #     print(f"{passage}\n\n")
+    # print(len(markdown_doc))
 
-#     dirname = os.path.expanduser('~/crossref/documents/Book_of_Mormon')
-#     dir_doc = Document(dirname, InputFormat.DIRECTORY)
-#     print_json_to_depth(dir_doc.structured, depth=4)
-#     for passage in dir_doc.passages[-10:]:
-#         print(f"{passage}\n\n")
-#     print(len(dir_doc))
+    # dirname = os.path.expanduser('~/crossref/documents/Book_of_Mormon')
+    # dir_doc = Document(dirname, InputFormat.DIRECTORY)
+    # print_json_to_depth(dir_doc.structured, depth=4)
+    # for passage in dir_doc.passages[-10:]:
+    #     print(f"{passage}\n\n")
+    # print(len(dir_doc))
 
 
-# if __name__ == main():
-#     main()
+if __name__ == main():
+    main()

@@ -4,7 +4,7 @@ from nltk.tokenize import word_tokenize
 import string
 
 from crossref.metrics.base import SimilarityMetric
-
+from crossref.preprocessing import remove_punctuation, normalize_text
 
 class SyntacticSimilarityMetric(SimilarityMetric):
     def __init__(self):
@@ -71,7 +71,7 @@ class NGramMetric(SyntacticSimilarityMetric):
         Generate n-grams from a text for all n from n_min to n_max using NLTK.
         Returns a dictionary with n as keys and sets of n-grams as values.
         """
-        cleaned_text: str = text.strip().lower().translate(str.maketrans('', '', string.punctuation))  # TODO: Maybe clean text before hand
+        cleaned_text: str = normalize_text(remove_punctuation(text))
         tokens: list[str] = word_tokenize(cleaned_text)
         text_ngrams: dict[int, set[tuple[str, ...]]] =  {n: set(ngrams(tokens, n)) - self.stopgrams[n] for n in range(self.n_min, self.n_max + 1)}
         return text_ngrams
