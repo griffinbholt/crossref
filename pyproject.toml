@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "crossref"
 version = "0.0.1"
-description = "A Python package for automated document cross-referencing"
+description = "CrossRef: A Python package for automated document cross-referencing"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { file = "LICENSE" }
