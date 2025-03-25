@@ -9,7 +9,9 @@ Python package for automated document cross-referencing
     *   Could I combine n-grams with word vectors to get a ngram-vector?
     *   RapidFuzz
 *   Paragraph Embeddings & Cosine Similarity (for thematic / semantic matching)
-    *   SBERT: https://www.sbert.net/docs/sentence_transformer/usage/semantic_textual_similarity.html
+    *   Doc2Vec
 *   Clean input text
     *   Normalize spelling
     *   Remove special characters appropriately
+*   Data Mining Techniques:
+    *   Minhash / LSH
