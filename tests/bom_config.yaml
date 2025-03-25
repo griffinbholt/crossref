@@ -1,3 +1,5 @@
+# Configuration file for cross-referencing the Book of Mormon against itself.
+
 documents:
   - path: ~/crossref/tests/documents/bookofmormon.md
     format: markdown
@@ -13,3 +15,5 @@ metrics:
   - name: 'sentencetransformer'
     modelname: 'all-mpnet-base-v2'
     similarity_fn: 'cosine'
+preprocessing: # TODO
+reports: # TODO

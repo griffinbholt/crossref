@@ -2,8 +2,8 @@ import argparse
 import os
 import yaml
 
-from parsing import Document, InputFormat
-from metrics.base import SimilarityMetric
+from crossref.documents import Document, InputFormat
+from crossref.metrics.base import SimilarityMetric
 
 
 def main():
@@ -14,6 +14,8 @@ def main():
     # TODO - Clean the sources
     # TODO - Start the various subprocess (in a queue for parallel processing?)
     # TODO - Compile the reports
+    # TODO - Caching results
+    # TODO - Use tqdm for progress bars
     pass
 
 
