@@ -1,5 +1,7 @@
 import string
+
 from compose import compose
+from nltk.corpus import stopwords
 from typing import Callable
 
 
@@ -43,6 +45,15 @@ def remove_extra_spaces(text: str) -> str:
 
 def normalize_text(text: str) -> str:
     return text.lower()
+
+
+def remove_stopwords(text: str, custom_stopphrases: set[str] = set()) -> str:
+    stopphrases = set(stopwords.words('english')) | custom_stopphrases
+    for phrase in sorted(stopphrases, key=len, reverse=True):
+        text = text.replace(f' {phrase} ', ' ')
+    text = ' '.join(word for word in text.split() if word not in stopphrases)
+    return text
+
 
 # TODO: Remove diacritics - If it removes accents or other diacritical marks.
 

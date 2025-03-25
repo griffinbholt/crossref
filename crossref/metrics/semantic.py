@@ -4,7 +4,7 @@ import torch
 # from gensim.models.doc2vec import Doc2Vec, TaggedDocument
 from sentence_transformers import SentenceTransformer, SimilarityFunction
 
-from crossref.metrics.base import SimilarityMetric
+from base import SimilarityMetric
 
 
 class SemanticSimilarityMetric(SimilarityMetric):
