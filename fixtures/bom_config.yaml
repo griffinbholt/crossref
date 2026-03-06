@@ -1,0 +1,54 @@
+# Book of Mormon vs. itself
+# Run: crossref fixtures/bom_config.yaml --output results/bom_self.h5
+
+documents:
+  - pathname: ~/crossref/fixtures/documents/bookofmormon.md
+    splitter: line
+
+preprocessing:
+  - replace_punctuation:
+      - ['\u2018', "'"]  # left single quote → apostrophe
+      - ['\u2019', "'"]  # right single quote → apostrophe
+      - ['—', ' ']       # em-dash → space
+      - ['–', ' ']       # en-dash → space
+  - normalize_text: true
+  - remove_extra_spaces: true
+
+metrics:
+  # N-gram: aggressive stopphrase removal for self-comparison — filters ubiquitous
+  # BoM/KJV words not covered by NLTK's standard English stopword list.
+  - name: ngram
+    n_min: 2
+    n_max: 10
+    custom_stopphrases:
+      # High-frequency archaic / scripture-specific words (not in NLTK stopwords)
+      - "yea"
+      - "behold"
+      - "unto"
+      - "thee"
+      - "thy"
+      - "thou"
+      - "ye"
+      - "hath"
+      - "saith"
+      - "verily"
+      - "nay"
+      # BoM-specific filler phrases
+      - "came to pass"
+      - "it came to pass"
+      - "and it came to pass"
+      - "and it came to pass that"
+      - "it came to pass that"
+      - "came to pass that"
+      # KJV / LDS common phrases — too frequent to be meaningful in self-comparison
+      - "the lord"
+      - "saith the lord"
+      - "thus saith the lord"
+      - "the lord thy god"
+      - "the lord your god"
+      - "house of israel"
+
+  # Semantic: best-quality model for finding thematic parallels
+  - name: sentencetransformer
+    modelname: all-mpnet-base-v2
+    similarity_fn: cosine

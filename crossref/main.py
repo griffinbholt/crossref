@@ -11,13 +11,28 @@ def main():
     args = parse_args()
     config = load_config(args.config)
     preprocess_fn = generate_preprocessing_pipeline(config)
-    documents = load_documents(config, preprocess_fn)
+    docs1, docs2 = load_documents(config)
     metrics = load_metrics(config)
 
-    results = compare(documents, metrics=metrics)
+    results = compare(
+        docs1,
+        docs2,
+        metrics=metrics,
+        preprocess_fn=preprocess_fn,
+        preprocessing_config=config.get('preprocessing'),
+        workers=config.get('workers', 1),
+    )
 
-    print(f"Compared {len(documents)} document(s)")
-    for doc in documents:
+    if docs2 is None:
+        all_docs = docs1
+    else:
+        seen, all_docs = set(), []
+        for d in docs1 + docs2:
+            if id(d) not in seen:
+                seen.add(id(d))
+                all_docs.append(d)
+    print(f"Compared {len(all_docs)} document(s)")
+    for doc in all_docs:
         print(f"  {doc.title}: {len(doc)} passages")
 
     if args.output:
@@ -40,17 +55,56 @@ def load_config(config_path: str) -> dict:
         return yaml.safe_load(f)
 
 
-def load_documents(config: dict, preprocess_fn) -> list[Document]:
-    documents = []
-    for doc_config in config['documents']:
-        document = Document.from_file(
-            path=os.path.expanduser(doc_config['pathname']),
-            splitter=doc_config.get('splitter', 'line'),
-            preprocess_fn=preprocess_fn,
-            title=doc_config.get('title'),
+def load_documents(config: dict) -> tuple[list[Document], list[Document] | None]:
+    """Return (docs1, docs2).
+
+    If the config has a top-level 'documents' key, docs2 is None (all-vs-all or
+    single-pair depending on count). If it has 'documents1'/'documents2' keys,
+    docs2 is a separate list (list×list topology).
+    """
+    if 'documents1' in config:
+        if 'documents2' not in config:
+            raise ValueError("Config has 'documents1' but no 'documents2'.")
+        return (
+            [_load_document(dc) for dc in config['documents1']],
+            [_load_document(dc) for dc in config['documents2']],
         )
-        documents.append(document)
-    return documents
+    return [_load_document(dc) for dc in config['documents']], None
+
+
+def _load_document(doc_config: dict) -> Document:
+    path = os.path.expanduser(doc_config['pathname'])
+    title = doc_config.get('title')
+    # Format is inferred from extension; 'format' key overrides if provided.
+    fmt = doc_config.get('format', os.path.splitext(path)[1].lstrip('.').lower())
+
+    if fmt in ('csv', 'tsv'):
+        return Document.from_csv(
+            path,
+            text_column=doc_config['text_column'],
+            label_column=doc_config.get('label_column'),
+            delimiter=doc_config.get('delimiter'),
+            title=title,
+        )
+    if fmt == 'json':
+        return Document.from_json(
+            path,
+            text_key=doc_config['text_key'],
+            label_key=doc_config.get('label_key'),
+            title=title,
+        )
+    if fmt in ('jsonl', 'ndjson'):
+        return Document.from_jsonl(
+            path,
+            text_key=doc_config['text_key'],
+            label_key=doc_config.get('label_key'),
+            title=title,
+        )
+    return Document.from_file(
+        path,
+        splitter=doc_config.get('splitter', 'line'),
+        title=title,
+    )
 
 
 def load_metrics(config: dict) -> list[SimilarityMetric]:

@@ -27,10 +27,12 @@ class SimilarityMetric(ABC):
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
-        # Only enforce on concrete (fully implemented) subclasses.
-        # Abstract intermediates (e.g. SyntacticSimilarityMetric) still carry
-        # abstract methods and are exempt.
-        if not getattr(cls, '__abstractmethods__', frozenset()) and not cls.name:
+        # Enforce that classes providing a concrete score() also define a name.
+        # We check cls.__dict__ rather than __abstractmethods__ because ABCMeta
+        # sets __abstractmethods__ *after* __init_subclass__ is called, making
+        # it unreliable here. Abstract intermediates (e.g. SyntacticSimilarityMetric)
+        # simply pass without defining score(), so they are naturally exempt.
+        if 'score' in cls.__dict__ and not cls.name:
             raise TypeError(
                 f"Concrete metric class {cls.__name__!r} must define a non-empty "
                 f"class attribute 'name'. Example: name = 'my_metric'"

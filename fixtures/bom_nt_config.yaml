@@ -1,0 +1,52 @@
+# Book of Mormon vs. KJV New Testament
+# Run: crossref fixtures/bom_nt_config.yaml --output results/bom_nt.h5
+
+documents1:
+  - pathname: ~/crossref/fixtures/documents/bookofmormon.md
+    splitter: line
+    title: Book of Mormon
+
+documents2:
+  - pathname: ~/crossref/fixtures/documents/kjvnewtestament.md
+    splitter: line
+    title: KJV New Testament
+
+preprocessing:
+  - replace_punctuation:
+      - ['\u2018', "'"]  # left single quote → apostrophe
+      - ['\u2019', "'"]  # right single quote → apostrophe
+      - ['—', ' ']       # em-dash → space
+      - ['–', ' ']       # en-dash → space
+  - normalize_text: true
+  - remove_extra_spaces: true
+
+metrics:
+  # N-gram: lighter stopphrase removal for cross-document comparison — shared phrases
+  # between BoM and NT may be meaningful quotations, so only filter pure filler.
+  - name: ngram
+    n_min: 2
+    n_max: 10
+    custom_stopphrases:
+      # Archaic words not in NLTK that dominate both corpora
+      - "yea"
+      - "behold"
+      - "unto"
+      - "thee"
+      - "thy"
+      - "thou"
+      - "ye"
+      - "hath"
+      - "saith"
+      - "verily"
+      # BoM filler phrases (no signal in cross-document context)
+      - "came to pass"
+      - "it came to pass"
+      - "and it came to pass"
+      - "and it came to pass that"
+      - "it came to pass that"
+      - "came to pass that"
+
+  # Semantic: captures thematic / doctrinal parallels beyond word overlap
+  - name: sentencetransformer
+    modelname: all-mpnet-base-v2
+    similarity_fn: cosine

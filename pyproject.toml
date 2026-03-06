@@ -38,6 +38,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+hdf5 = ["h5py"]                                    # HDF5 backend for Results/ResultsCollection save/load
 doc2vec = ["gensim"]                               # Doc2VecMetric, AveragedWordVecMetric, WMDMetric, SoftCosineMetric
 tfidf = ["scikit-learn"]                           # TFIDFMetric, LSAMetric
 bm25 = ["rank-bm25"]                               # BM25Metric
@@ -45,6 +46,10 @@ fuzzy = ["rapidfuzz"]                              # FuzzyNGramMetric
 phonetic = ["jellyfish"]                           # PhoneticMetric
 colbert = ["pylate"]                               # ColBERTMetric
 llm = ["anthropic", "openai", "cohere", "voyageai"]  # LLMJudgeMetric, APIEmbeddingMetric
+pdf = ["pypdf"]                                    # Document.from_file (.pdf)
+docx = ["python-docx"]                             # Document.from_file (.docx)
+html = ["beautifulsoup4"]                          # Document.from_file (.html/.htm)
+epub = ["ebooklib", "beautifulsoup4"]              # Document.from_file (.epub)
 dev = ["pytest", "coverage"]
 
 # List URLs that are relevant to your project (TODO)

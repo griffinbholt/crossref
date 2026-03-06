@@ -30,7 +30,9 @@ class NGramMetric(SyntacticSimilarityMetric):
         ngrams_text1: dict[int, set[tuple[str, ...]]] = self._generate_ngrams(text1)
         ngrams_text2: dict[int, set[tuple[str, ...]]] = self._generate_ngrams(text2)
         common_ngrams: dict[int, set[tuple[str, ...]]] = self._find_common_largest_ngrams(ngrams_text1, ngrams_text2)
-        score: float = self._compute_ngram_score(common_ngrams)
+        raw: float = self._compute_ngram_score(common_ngrams)
+        norm = min(self._self_score(ngrams_text1), self._self_score(ngrams_text2))
+        score = raw / norm if norm > 0 else 0.0
         if return_full:
             return score, common_ngrams
         return score

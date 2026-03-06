@@ -1,0 +1,59 @@
+# All four LDS standard works vs. each other (all-vs-all)
+# Run: crossref fixtures/all_config.yaml --output results/all_scriptures.h5
+#
+# This produces a 4×4 ResultsCollection (10 unique pairs including self-comparisons).
+# OT alone is ~23K verses; total pair count is large — use HDF5 output and workers.
+
+workers: 4  # parallel pair scoring (4 pairs run simultaneously)
+
+documents:
+  - pathname: ~/crossref/fixtures/documents/kjvoldtestament.md
+    splitter: line
+  - pathname: ~/crossref/fixtures/documents/kjvnewtestament.md
+    splitter: line
+  - pathname: ~/crossref/fixtures/documents/bookofmormon.md
+    splitter: line
+  - pathname: ~/crossref/fixtures/documents/doctrineandcovenants.md
+    splitter: line
+
+preprocessing:
+  - replace_punctuation:
+      - ['\u2018', "'"]  # left single quote → apostrophe
+      - ['\u2019', "'"]  # right single quote → apostrophe
+      - ['—', ' ']       # em-dash → space
+      - ['–', ' ']       # en-dash → space
+  - normalize_text: true
+  - remove_extra_spaces: true
+
+metrics:
+  # N-gram: balanced stopphrase removal across all four corpora.
+  # Keeps shared doctrinal phrases (meaningful cross-scripture signal) while
+  # filtering filler phrases that inflate scores without indicating real parallels.
+  - name: ngram
+    n_min: 2
+    n_max: 10
+    custom_stopphrases:
+      # Archaic words not in NLTK that dominate all four corpora
+      - "yea"
+      - "behold"
+      - "unto"
+      - "thee"
+      - "thy"
+      - "thou"
+      - "ye"
+      - "hath"
+      - "saith"
+      - "verily"
+      # BoM filler phrases
+      - "came to pass"
+      - "it came to pass"
+      - "and it came to pass"
+      - "and it came to pass that"
+      - "it came to pass that"
+      - "came to pass that"
+
+  # Semantic: cross-corpus thematic parallels — OT prophecy ↔ NT fulfillment,
+  # BoM doctrinal echoes, D&C restorations of earlier texts.
+  - name: sentencetransformer
+    modelname: all-mpnet-base-v2
+    similarity_fn: cosine

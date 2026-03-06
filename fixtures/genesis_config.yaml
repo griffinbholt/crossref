@@ -1,0 +1,93 @@
+# Genesis vs. all four LDS standard works
+# Run: crossref fixtures/genesis_config.yaml --output results/genesis_all.h5
+#
+# Produces a 1×4 ResultsCollection:
+#   collection[0, 0]  → Genesis vs. KJV Old Testament
+#   collection[0, 1]  → Genesis vs. KJV New Testament
+#   collection[0, 2]  → Genesis vs. Book of Mormon
+#   collection[0, 3]  → Genesis vs. Doctrine & Covenants
+
+workers: 4
+
+documents1:
+  - pathname: ~/crossref/fixtures/documents/The_Old_Testament/00_Genesis
+    splitter: line
+    title: Genesis
+
+documents2:
+  - pathname: ~/crossref/fixtures/documents/kjvoldtestament.md
+    splitter: line
+    title: KJV Old Testament
+
+  - pathname: ~/crossref/fixtures/documents/kjvnewtestament.md
+    splitter: line
+    title: KJV New Testament
+
+  - pathname: ~/crossref/fixtures/documents/bookofmormon.md
+    splitter: line
+    title: Book of Mormon
+
+  - pathname: ~/crossref/fixtures/documents/doctrineandcovenants.md
+    splitter: line
+    title: Doctrine and Covenants
+
+preprocessing:
+  - replace_punctuation:
+      - ['\u2018', "'"]  # left single quote → apostrophe
+      - ['\u2019', "'"]  # right single quote → apostrophe
+      - ['—', ' ']       # em-dash → space
+      - ['–', ' ']       # en-dash → space
+      - ['[', '']        # KJV translator additions: "[was]" → "was"
+      - [']', '']
+  - normalize_text: true
+  - remove_extra_spaces: true
+
+metrics:
+  # ── Syntactic ──────────────────────────────────────────────────────────────
+  # NGram: finds verbatim phrase quotations — "in the beginning", "multiply and
+  # replenish the earth", "I am the God of Abraham" etc. Contiguous matches only.
+  - name: ngram
+    n_min: 2
+    n_max: 10
+    custom_stopphrases:
+      # Archaic / scripture-specific words not in NLTK's English stopword list
+      - "yea"
+      - "behold"
+      - "unto"
+      - "thee"
+      - "thy"
+      - "thou"
+      - "ye"
+      - "hath"
+      - "saith"
+      - "verily"
+      # BoM filler
+      - "came to pass"
+      - "it came to pass"
+      - "and it came to pass"
+      - "and it came to pass that"
+      - "it came to pass that"
+      - "came to pass that"
+
+  # LCS: finds passages that share a chain of Genesis words even when the other
+  # text inserts elaborating material between them — NT/BoM passages that echo
+  # Genesis narratives but expand or paraphrase them mid-stream.
+  - name: lcs
+
+  # ── Semantic ───────────────────────────────────────────────────────────────
+  # SentenceTransformer: captures thematic and conceptual parallels beyond word
+  # overlap — creation, covenant, promised land, patriarchal blessings, etc.
+  # all-mpnet-base-v2 is the highest-quality general-purpose model.
+  - name: sentencetransformer
+    modelname: all-mpnet-base-v2
+    similarity_fn: cosine
+
+  # ── Statistical ────────────────────────────────────────────────────────────
+  # TF-IDF: corpus-aware vocabulary overlap. Down-weights words that appear
+  # across all scriptures ("god", "israel") and up-weights Genesis-specific
+  # vocabulary ("Eden", "Abram", "birthright", "coat of many colors").
+  # Requires: pip install "crossref[tfidf]"
+  - name: tfidf
+    analyzer: word
+    ngram_range: [1, 2]   # unigrams + bigrams
+    sublinear_tf: true     # log-scale TF dampening

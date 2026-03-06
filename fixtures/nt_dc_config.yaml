@@ -1,0 +1,46 @@
+# KJV New Testament vs. Doctrine & Covenants
+# Run: crossref fixtures/nt_dc_config.yaml --output results/nt_dc.h5
+
+documents1:
+  - pathname: ~/crossref/fixtures/documents/kjvnewtestament.md
+    splitter: line
+    title: KJV New Testament
+
+documents2:
+  - pathname: ~/crossref/fixtures/documents/doctrineandcovenants.md
+    splitter: line
+    title: Doctrine and Covenants
+
+preprocessing:
+  - replace_punctuation:
+      - ['\u2018', "'"]  # left single quote → apostrophe
+      - ['\u2019', "'"]  # right single quote → apostrophe
+      - ['—', ' ']       # em-dash → space
+      - ['–', ' ']       # en-dash → space
+  - normalize_text: true
+  - remove_extra_spaces: true
+
+metrics:
+  # N-gram: D&C quotes the NT directly in many places; shared phrases are often
+  # intentional citations. Filter only filler, preserve meaningful shared language.
+  - name: ngram
+    n_min: 2
+    n_max: 10
+    custom_stopphrases:
+      # Archaic words not in NLTK that dominate both corpora
+      - "yea"
+      - "behold"
+      - "unto"
+      - "thee"
+      - "thy"
+      - "thou"
+      - "ye"
+      - "hath"
+      - "saith"
+      - "verily"
+
+  # Semantic: captures doctrinal and thematic parallels — NT teachings on
+  # priesthood, resurrection, charity etc. echoed and expanded in D&C.
+  - name: sentencetransformer
+    modelname: all-mpnet-base-v2
+    similarity_fn: cosine
