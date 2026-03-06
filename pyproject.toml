@@ -29,7 +29,7 @@ maintainers = [{ name = "Griffin Holt", email = "griffinbholt@gmail.com" }]
 # TODO: Determine versions
 dependencies = [
     "compose",                # preprocessing.py
-    "gensim",                 # semantic.py
+    "matplotlib",             # results.py (heatmap)
     "nltk",                   # syntactic.py
     "numpy",                  # base.py, semantic.py
     "pyyaml",                 # main.py
@@ -37,18 +37,15 @@ dependencies = [
     "torch",                  # semantic.py
 ]
 
-# List additional groups of dependencies here (e.g. development
-# dependencies). Users will be able to install these using the "extras"
-# syntax, for example:
-#
-#   $ pip install sampleproject[dev]
-#
-# Optional dependencies the project provides. These are commonly
-# referred to as "extras". For a more extensive definition see:
-# https://packaging.python.org/en/latest/specifications/dependency-specifiers/#extras
-# [project.optional-dependencies]
-# dev = ["check-manifest"]
-# test = ["coverage"]
+[project.optional-dependencies]
+doc2vec = ["gensim"]                               # Doc2VecMetric, AveragedWordVecMetric, WMDMetric, SoftCosineMetric
+tfidf = ["scikit-learn"]                           # TFIDFMetric, LSAMetric
+bm25 = ["rank-bm25"]                               # BM25Metric
+fuzzy = ["rapidfuzz"]                              # FuzzyNGramMetric
+phonetic = ["jellyfish"]                           # PhoneticMetric
+colbert = ["pylate"]                               # ColBERTMetric
+llm = ["anthropic", "openai", "cohere", "voyageai"]  # LLMJudgeMetric, APIEmbeddingMetric
+dev = ["pytest", "coverage"]
 
 # List URLs that are relevant to your project (TODO)
 [project.urls]

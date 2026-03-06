@@ -1,0 +1,51 @@
+Proposed Layers
+
+Ingestion → Preprocessing → Metrics → Storage → Analysis/Reporting
+Each layer is independently useful and replaceable.
+
+Layer 1: Ingestion (Document → Passages)
+This is where you reduce manual prep work. The key abstraction is a passage splitter: a function that takes raw content and returns list[str].
+
+Built-in splitters you could ship:
+
+Line (current default)
+Paragraph (split on blank lines)
+Sentence (using NLTK/spaCy)
+Fixed-window (every N words/chars, with optional overlap)
+Regex (user-defined delimiter pattern)
+Structural (split at a given markdown heading depth — e.g., one passage per ### section)
+Supported input formats: plain .txt, .md, .pdf, .html, and potentially others via plugins. The old/parse.py one-off is a sign that people will always have custom formats — so you probably also want an escape hatch: Document.from_passages(list[str]) so someone can bring pre-split content directly.
+
+Each passage should carry metadata (source document, structural path like Book > Chapter > Verse, index). This metadata is what makes reports readable rather than just showing index numbers.
+
+Layer 2: Preprocessing
+Already well-designed. The only addition I'd suggest: preprocessing should probably be per-metric, not just global. NGram metrics want stopword removal and punctuation stripping; a sentence transformer usually wants clean but natural-language text. Global preprocessing is a convenience default, but per-metric overrides matter.
+
+Layer 3: Metrics
+Your semantic/syntactic split is good. I'd consider a third category:
+
+Syntactic — exact/near-exact word-level: n-grams, edit distance, LCS, character n-grams, fuzzy match
+Semantic — meaning-level: sentence transformers, TF-IDF + cosine, topic modeling (LDA), word embeddings
+Statistical — distribution-based: normalized compression distance (NCD — compresses both texts together and measures redundancy), KL divergence on word distributions, vocabulary overlap ratios
+NCD is particularly interesting: it's language-agnostic and captures similarity that neither syntactic nor semantic methods catch well.
+
+One interface note: score_all(texts1, texts2) returning np.ndarray of shape (len(texts1), len(texts2)) is exactly right. Symmetric metrics can optimize by only computing the upper triangle.
+
+Layer 4: Storage (the most important architectural decision)
+Separating compute from analysis is the core of your vision. You run the expensive computation once, save everything, then query it arbitrarily later.
+
+The results object should store:
+
+The similarity matrix for each metric (sparse or dense depending on size)
+Passage metadata for both documents (text, source, structural path, index)
+The config/parameters used (for reproducibility)
+Format options: .npz + JSON sidecar, HDF5 (handles large matrices well), or a SQLite database (queryable without loading everything into memory — probably the best for large scripture comparisons). I'd lean toward SQLite for results: you can do SELECT * FROM scores WHERE metric='ngram' AND doc1_passage=42 ORDER BY score DESC LIMIT 10 without loading a 50k×50k matrix.
+
+Layer 5: Analysis / Reporting
+This is where the separated compute pays off. Ideas for built-in analyses:
+
+Top-K cross-references: for a given passage, return the top K matches across any document by any metric
+Threshold filter: all passage pairs with score above X
+Evidence view: for a syntactic match, show which n-grams overlapped; for a semantic match, show the score and both passages side by side
+Heatmap export: the visual similarity matrix (matplotlib or a standalone HTML)
+Comparison diff: given results A (BoM vs KJV) and results B (BoM vs JST), compute A − B to find where BoM aligns with JST changes — this is your README idea

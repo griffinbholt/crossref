@@ -1,0 +1,57 @@
+# CrossRef Example Configuration
+# Run with: crossref example_config.yaml --output results.pkl
+
+# ── Documents ──────────────────────────────────────────────────────────────
+# Each entry needs a 'pathname' (file or directory) and an optional 'splitter'.
+# Supported splitters: line (default), paragraph, section, sentence
+# Directories are walked recursively; .md files inside are parsed for headings.
+documents:
+  - pathname: ~/texts/document_a.txt
+    splitter: line
+
+  - pathname: ~/texts/document_b.md
+    splitter: paragraph
+
+  # Directory of .txt or .md files (e.g. one file per chapter)
+  # - pathname: ~/texts/my_book/
+  #   splitter: sentence
+
+# ── Preprocessing ──────────────────────────────────────────────────────────
+# Steps are applied in order, left to right.
+# All steps are optional; omit this section entirely to skip preprocessing.
+preprocessing:
+  # Lowercase all text
+  - normalize_text: true
+
+  # Replace specific punctuation characters (list of [from, to] pairs)
+  - replace_punctuation:
+      - ["-", " "]   # hyphens → spaces
+      - ["—", " "]   # em-dashes → spaces
+
+  # Remove all punctuation except the listed characters (empty string = remove all)
+  - remove_all_punctuation_except: ""
+
+  # Collapse multiple spaces into one
+  - remove_extra_spaces: true
+
+  # Remove stopwords. Provide a list of additional custom stopphrases,
+  # or an empty list to use only NLTK's English stopword list.
+  - remove_stopwords: []
+  # - remove_stopwords:
+  #     - "yea"
+  #     - "behold"
+  #     - "and it came to pass"
+
+# ── Metrics ────────────────────────────────────────────────────────────────
+# At least one metric is required.
+metrics:
+  # Syntactic n-gram overlap metric
+  - name: ngram
+    n_min: 2          # minimum n-gram length (default: 2)
+    n_max: null       # maximum n-gram length; null = uncapped (default: null)
+    custom_stopphrases: []   # additional phrases stripped before scoring
+
+  # Semantic similarity via sentence-transformers
+  # - name: sentencetransformer
+  #   modelname: all-MiniLM-L6-v2   # fastest; good quality
+  #   # modelname: all-mpnet-base-v2  # slower; best quality
