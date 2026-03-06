@@ -1,3 +1,7 @@
+import logging
+
+logging.getLogger(__name__).addHandler(logging.NullHandler())
+
 from .documents import Document, Passage
 from .compare import compare
 from .results import Results, ResultsCollection, Match, FilterMatch, CollectionMatch

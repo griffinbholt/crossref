@@ -1,11 +1,14 @@
 import csv
 import json
+import logging
 import os
 import pickle
 
 import numpy as np
 
 from typing import Generator, NamedTuple, TYPE_CHECKING
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from .documents import Passage
@@ -416,6 +419,7 @@ class Results:
             threshold: Required for SQLite — only scores at or above this value are stored.
         """
         backend = backend or _infer_backend(path)
+        logger.info("Saving Results to %s (backend: %s)", path, backend)
         if backend == 'pickle':
             with open(path, 'wb') as f:
                 pickle.dump(self, f)
@@ -436,6 +440,7 @@ class Results:
     @classmethod
     def load(cls, path: str) -> 'Results':
         """Load results from disk. Backend is inferred from the file extension."""
+        logger.info("Loading Results from %s", path)
         backend = _infer_backend(path)
         if backend == 'hdf5':
             return cls._load_hdf5(path)
@@ -572,6 +577,10 @@ class Results:
         # Substring match fallback
         matches = [(i, p) for i, p in enumerate(passages) if p.label and passage in p.label]
         if len(matches) == 1:
+            logger.warning(
+                "Label %r not found exactly; using substring match: %r",
+                passage, matches[0][1].label,
+            )
             return matches[0][0]
         if len(matches) > 1:
             labels = [p.label for _, p in matches]
@@ -660,6 +669,7 @@ class ResultsCollection:
             threshold: Required for SQLite — only scores at or above this value are stored.
         """
         backend = backend or _infer_backend(path)
+        logger.info("Saving ResultsCollection to %s (backend: %s)", path, backend)
         if backend == 'pickle':
             with open(path, 'wb') as f:
                 pickle.dump(self, f)
@@ -680,6 +690,7 @@ class ResultsCollection:
     @classmethod
     def load(cls, path: str) -> 'ResultsCollection':
         """Load results from disk. Backend is inferred from the file extension."""
+        logger.info("Loading ResultsCollection from %s", path)
         backend = _infer_backend(path)
         if backend == 'hdf5':
             return cls._load_hdf5(path)

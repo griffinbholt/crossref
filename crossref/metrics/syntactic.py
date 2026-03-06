@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 
 from nltk.util import ngrams
@@ -5,6 +7,8 @@ from nltk.tokenize import word_tokenize
 
 from .base import SimilarityMetric
 from ..preprocessing import remove_punctuation, normalize_text, remove_stopwords
+
+logger = logging.getLogger(__name__)
 
 
 class SyntacticSimilarityMetric(SimilarityMetric):
@@ -43,6 +47,7 @@ class NGramMetric(SyntacticSimilarityMetric):
         texts2: list[str],
         return_full: bool = False,
     ) -> np.ndarray | tuple[np.ndarray, list[list[dict[int, set[tuple[str, ...]]]]]]:
+        logger.debug("NGramMetric.score_all: %dx%d", len(texts1), len(texts2))
         ngram_cache1: list[dict[int, set[tuple[str, ...]]]] = [self._generate_ngrams(text) for text in texts1]
         ngram_cache2: list[dict[int, set[tuple[str, ...]]]] = [self._generate_ngrams(text) for text in texts2]
         self_scores1 = [self._self_score(ng) for ng in ngram_cache1]
@@ -73,6 +78,7 @@ class NGramMetric(SyntacticSimilarityMetric):
         return nmlzd_scores
 
     def score_self(self, texts: list[str]) -> np.ndarray:
+        logger.debug("NGramMetric.score_self: %d passages", len(texts))
         ngram_cache = [self._generate_ngrams(text) for text in texts]
         self_scores = [self._self_score(ng) for ng in ngram_cache]
         n = len(texts)

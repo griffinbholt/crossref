@@ -2,9 +2,19 @@
 # Run with: crossref example_config.yaml --output results.pkl
 
 # ── Documents ──────────────────────────────────────────────────────────────
-# Each entry needs a 'pathname' (file or directory) and an optional 'splitter'.
+# Two topologies are supported:
+#
+# 1. All-vs-all: every document is compared against every other document.
+#    Use 'documents' with 2+ entries to get an N×N ResultsCollection.
+#
+# 2. List × list: compare a fixed left set against a fixed right set.
+#    Use 'documents1' + 'documents2' for an M×N ResultsCollection.
+#    This avoids spurious self-comparisons when you have a primary text
+#    and one or more reference texts.
+#
 # Supported splitters: line (default), paragraph, section, sentence
-# Directories are walked recursively; .md files inside are parsed for headings.
+
+# --- Topology 1: all-vs-all ---
 documents:
   - pathname: ~/texts/document_a.txt
     splitter: line
@@ -16,9 +26,24 @@ documents:
   # - pathname: ~/texts/my_book/
   #   splitter: sentence
 
+# --- Topology 2: list × list (uncomment to use instead of 'documents') ---
+# documents1:
+#   - pathname: ~/texts/primary.md
+#     splitter: line
+#
+# documents2:
+#   - pathname: ~/texts/reference_a.md
+#     splitter: line
+#   - pathname: ~/texts/reference_b.md
+#     splitter: line
+
+# ── Workers ────────────────────────────────────────────────────────────────
+# Number of parallel threads for scoring document pairs concurrently.
+# Each thread scores one document pair; metrics within a pair are serial.
+# workers: 1
+
 # ── Preprocessing ──────────────────────────────────────────────────────────
-# Steps are applied in order, left to right.
-# All steps are optional; omit this section entirely to skip preprocessing.
+# Steps are applied in order. Omit this section entirely to skip preprocessing.
 preprocessing:
   # Lowercase all text
   - normalize_text: true
@@ -43,15 +68,126 @@ preprocessing:
   #     - "and it came to pass"
 
 # ── Metrics ────────────────────────────────────────────────────────────────
-# At least one metric is required.
+# At least one metric is required. Mix and match from the three categories.
 metrics:
-  # Syntactic n-gram overlap metric
+
+  # --- Syntactic -----------------------------------------------------------
+
+  # N-gram overlap (largest non-overlapping shared phrases, normalized)
   - name: ngram
     n_min: 2          # minimum n-gram length (default: 2)
     n_max: null       # maximum n-gram length; null = uncapped (default: null)
+    workers: 1        # ProcessPoolExecutor workers for row-parallel scoring
     custom_stopphrases: []   # additional phrases stripped before scoring
 
-  # Semantic similarity via sentence-transformers
+  # Longest Common Subsequence (word-level, allows gaps)
+  # - name: lcs
+  #   workers: 1
+
+  # Longest Common Substring (word-level, contiguous — stricter than lcs)
+  # - name: lcsubstring
+  #   workers: 1
+
+  # Jaccard similarity on word sets (or n-gram shingles)
+  # - name: jaccard
+  #   n: 1      # shingle size; n=1 = unigrams, n=2 = bigrams, etc.
+
+  # Character n-gram Jaccard (robust to spelling variation)
+  # - name: charngram
+  #   n: 4
+
+  # ROUGE-L F1 (LCS-based, harmonic mean precision/recall)
+  # - name: rouge_l
+  #   workers: 1
+
+  # ROUGE-N F1 (n-gram count overlap, symmetric)
+  # - name: rouge_n
+  #   n: 1
+
+  # Word-level Levenshtein edit distance similarity
+  # - name: levenshtein
+  #   workers: 1
+
+  # Dice coefficient on word/n-gram sets
+  # - name: dice
+  #   n: 1
+
+  # Phonetic similarity via Soundex/Metaphone (requires: pip install crossref[phonetic])
+  # - name: phonetic
+  #   algorithm: soundex   # or: metaphone, nysiis
+
+  # Fuzzy token-set ratio via rapidfuzz (requires: pip install crossref[fuzzy])
+  # - name: fuzzy_ngram
+
+  # --- Statistical ---------------------------------------------------------
+
+  # TF-IDF cosine similarity (requires: pip install crossref[tfidf])
+  # - name: tfidf
+  #   analyzer: word          # or: char
+  #   ngram_range: [1, 1]     # vocabulary n-gram range
+  #   sublinear_tf: true      # log(1+tf) scaling
+
+  # BM25 similarity — symmetrized, corpus-normalized (requires: pip install crossref[bm25])
+  # - name: bm25
+  #   k1: 1.5
+  #   b: 0.75
+
+  # Latent Semantic Analysis cosine similarity (requires: pip install crossref[tfidf])
+  # - name: lsa
+  #   n_components: 100
+
+  # Normalized Compression Distance (no extra dependencies)
+  # - name: ncd
+  #   level: 9      # zlib compression level 1–9
+  #   workers: 1
+
+  # Jensen-Shannon divergence on word distributions (no extra dependencies)
+  # - name: js
+
+  # Lempel-Ziv Jaccard Distance (no extra dependencies)
+  # - name: lzjd
+
+  # --- Semantic ------------------------------------------------------------
+
+  # Sentence-transformers cosine similarity (requires: pip install crossref[semantic])
   # - name: sentencetransformer
-  #   modelname: all-MiniLM-L6-v2   # fastest; good quality
+  #   modelname: all-MiniLM-L6-v2    # fast; good quality
   #   # modelname: all-mpnet-base-v2  # slower; best quality
+
+  # Averaged word vectors (requires: pip install crossref[doc2vec])
+  # - name: avgwordvec
+  #   model_name: glove-wiki-gigaword-100   # downloaded automatically on first use
+
+  # Doc2Vec (trains on the full corpus; requires: pip install crossref[doc2vec])
+  # - name: doc2vec
+  #   vector_size: 100
+  #   epochs: 40
+  #   workers: 4
+
+  # Word Mover's Distance — O(n³)/pair, slow (requires: pip install crossref[doc2vec])
+  # - name: wmd
+  #   model_name: glove-wiki-gigaword-100
+  #   workers: 1
+
+  # Soft Cosine Similarity (requires: pip install crossref[doc2vec])
+  # - name: soft_cosine
+  #   model_name: glove-wiki-gigaword-100
+
+  # ColBERT late-interaction (requires: pip install crossref[colbert])
+  # - name: colbert
+  #   modelname: colbert-ir/colbertv2.0
+
+  # Cross-encoder (high quality, slow; requires: pip install crossref[semantic])
+  # - name: crossencoder
+  #   modelname: cross-encoder/stsb-roberta-large
+
+  # Cloud embedding API (requires: pip install crossref[llm])
+  # - name: api_embedding
+  #   provider: openai    # or: cohere, voyage
+  #   model: text-embedding-3-small
+
+  # LLM-as-judge (one API call per pair — very slow; requires: pip install crossref[llm])
+  # - name: llm_judge
+  #   provider: anthropic   # or: openai
+  #   model: claude-haiku-4-5-20251001
+  #   workers: 4            # concurrent API calls

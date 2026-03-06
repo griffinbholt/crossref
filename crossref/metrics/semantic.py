@@ -1,8 +1,12 @@
+import logging
+
 import numpy as np
 
 from sentence_transformers import SentenceTransformer, SimilarityFunction, CrossEncoder
 
 from .base import SimilarityMetric
+
+logger = logging.getLogger(__name__)
 
 
 class SemanticSimilarityMetric(SimilarityMetric):
@@ -22,17 +26,21 @@ class SentenceTransformerMetric(SemanticSimilarityMetric):
         super().__init__()
         self.modelname = modelname
         self.similarity_fn = similarity_fn
+        logger.info("Loading SentenceTransformer model: %s", modelname)
         self.model = SentenceTransformer(modelname, similarity_fn_name=similarity_fn)
+        logger.debug("Model loaded: %s", modelname)
 
     def score(self, text1: str, text2: str) -> float:
         return float(self.score_all([text1], [text2])[0, 0])
 
     def score_all(self, texts1: list[str], texts2: list[str]) -> np.ndarray:
+        logger.debug("Encoding %d + %d passages", len(texts1), len(texts2))
         embeddings1 = self.model.encode(texts1)
         embeddings2 = self.model.encode(texts2)
         return self.model.similarity(embeddings1, embeddings2).detach().cpu().numpy()
 
     def score_self(self, texts: list[str]) -> np.ndarray:
+        logger.debug("Encoding %d passages (self-comparison)", len(texts))
         embeddings = self.model.encode(texts)
         return self.model.similarity(embeddings, embeddings).detach().cpu().numpy()
 
@@ -110,6 +118,7 @@ class Doc2VecMetric(SemanticSimilarityMetric):
         return self._cosine_matrix(vecs, vecs)
 
     def _train(self, tagged):
+        logger.info("Doc2VecMetric: training on %d documents (%d epochs)", len(tagged), self.epochs)
         from gensim.models.doc2vec import Doc2Vec
         return Doc2Vec(
             tagged,
@@ -208,6 +217,7 @@ class AveragedWordVecMetric(SemanticSimilarityMetric):
 
     def _load_model(self):
         if self._model is None:
+            logger.info("AveragedWordVecMetric: loading model %r", self.model_name)
             import gensim.downloader
             self._model = gensim.downloader.load(self.model_name)
 
@@ -283,6 +293,7 @@ class ColBERTMetric(SemanticSimilarityMetric):
 
     def _load_model(self):
         if self._model is None:
+            logger.info("ColBERTMetric: loading model %r", self.modelname)
             from pylate import models
             self._model = models.ColBERT(model_name_or_path=self.modelname)
 
@@ -355,6 +366,11 @@ class LLMJudgeMetric(SemanticSimilarityMetric):
         return self._parse_score(self._call_llm(prompt))
 
     def score_all(self, texts1: list[str], texts2: list[str]) -> np.ndarray:
+        n_pairs = len(texts1) * len(texts2)
+        logger.info(
+            "LLMJudgeMetric.score_all: %d pairs (%dx%d) via %s/%s",
+            n_pairs, len(texts1), len(texts2), self.provider, self.model,
+        )
         pairs = [(t1, t2) for t1 in texts1 for t2 in texts2]
         if self.workers > 1:
             from concurrent.futures import ThreadPoolExecutor
@@ -366,6 +382,11 @@ class LLMJudgeMetric(SemanticSimilarityMetric):
 
     def score_self(self, texts: list[str]) -> np.ndarray:
         n = len(texts)
+        n_pairs = n * (n - 1) // 2
+        logger.info(
+            "LLMJudgeMetric.score_self: %d pairs (%d passages) via %s/%s",
+            n_pairs, n, self.provider, self.model,
+        )
         scores = np.ones((n, n))
         pairs_ij = [(i, j) for i in range(n) for j in range(i + 1, n)]
         if self.workers > 1:
@@ -460,6 +481,7 @@ class APIEmbeddingMetric(SemanticSimilarityMetric):
         return self._cosine_matrix(vecs, vecs)
 
     def _embed(self, texts: list[str]) -> np.ndarray:
+        logger.debug("APIEmbeddingMetric: embedding %d texts via %s/%s", len(texts), self.provider, self.model)
         if self.provider == "openai":
             import openai
             client = openai.OpenAI(api_key=self.api_key) if self.api_key else openai.OpenAI()
@@ -512,6 +534,7 @@ class CrossEncoderMetric(SemanticSimilarityMetric):
 
     def __init__(self, modelname: str):
         self.modelname = modelname
+        logger.info("Loading CrossEncoder model: %s", modelname)
         self.model = CrossEncoder(modelname)
 
     def score(self, text1: str, text2: str) -> float:
@@ -593,6 +616,7 @@ class WMDMetric(SemanticSimilarityMetric):
         return float(1.0 / (1.0 + dist)) if dist != float('inf') else 0.0
 
     def score_all(self, texts1: list[str], texts2: list[str]) -> np.ndarray:
+        logger.debug("WMDMetric.score_all: %dx%d (O(n³) per pair)", len(texts1), len(texts2))
         self._load_model()  # pre-load before threads to avoid race on first access
         pairs = [(t1, t2) for t1 in texts1 for t2 in texts2]
         if self.workers > 1:
@@ -620,6 +644,7 @@ class WMDMetric(SemanticSimilarityMetric):
 
     def _load_model(self):
         if self._model is None:
+            logger.info("WMDMetric: loading model %r", self.model_name)
             import gensim.downloader
             self._model = gensim.downloader.load(self.model_name)
 
@@ -667,6 +692,7 @@ class SoftCosineMetric(SemanticSimilarityMetric):
 
     def _load_model(self):
         if self._model is None:
+            logger.info("SoftCosineMetric: loading model %r", self.model_name)
             import gensim.downloader
             self._model = gensim.downloader.load(self.model_name)
 

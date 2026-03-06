@@ -1,3 +1,4 @@
+import logging
 import re
 import string
 import unicodedata
@@ -5,6 +6,8 @@ import unicodedata
 from compose import compose
 from nltk.corpus import stopwords
 from typing import Callable
+
+logger = logging.getLogger(__name__)
 
 
 def replace_punctuation(text: str, char_replace: list[tuple[str, str]]) -> str:
@@ -313,15 +316,20 @@ _PARAMETERIZED_FNS: dict[str, Callable] = {
 
 def generate_preprocessing_pipeline(config: dict) -> Callable[[str], str]:
     pipeline: list[Callable[[str], str]] = []
+    step_names: list[str] = []
     for module in (config.get('preprocessing') or []):
         fn_name, value = next(iter(module.items()))
         if fn_name in _PARAMETERIZED_FNS:
             pipeline.append(_PARAMETERIZED_FNS[fn_name](value))
+            step_names.append(fn_name)
         elif fn := globals().get(fn_name):
             if value:
                 pipeline.append(fn)
+                step_names.append(fn_name)
         else:
             raise ValueError(f"Unsupported preprocessing function: {fn_name!r}")
     if not pipeline:
+        logger.debug("No preprocessing steps configured — using identity pipeline")
         return lambda text: text
+    logger.debug("Preprocessing pipeline (%d steps): %s", len(step_names), " → ".join(step_names))
     return compose(*reversed(pipeline))

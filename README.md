@@ -181,8 +181,8 @@ results = crossref.compare(doc_a, doc_b, metrics=metrics, preprocess_fn=str.lowe
 | `normalize_unicode` | NFKC normalization |
 | `remove_numbers` | Strip digit sequences |
 | `remove_short_words` | Drop words shorter than N characters |
-| `stem_words` | Porter stemming (NLTK) |
-| `lemmatize_words` | WordNet lemmatization (NLTK) |
+| `stem` | Porter stemming (NLTK) |
+| `lemmatize` | WordNet lemmatization (NLTK) |
 
 ---
 
@@ -213,12 +213,12 @@ All metrics implement `score(text1, text2) → float` and `score_all(texts1, tex
 | `SentenceTransformerMetric` | `"sentencetransformer"` | Cosine similarity of sentence embeddings | — |
 | `CrossEncoderMetric` | `"crossencoder"` | Cross-encoder reranking score | — |
 | `ColBERTMetric` | `"colbert"` | Late-interaction ColBERT scoring | `[colbert]` |
-| `LLMJudgeMetric` | `"llmjudge"` | LLM-based similarity judgment | `[llm]` |
-| `APIEmbeddingMetric` | `"apiembedding"` | Embedding via API (OpenAI, Cohere, Voyage) | `[llm]` |
+| `LLMJudgeMetric` | `"llm_judge"` | LLM-based similarity judgment | `[llm]` |
+| `APIEmbeddingMetric` | `"api_embedding"` | Embedding via API (OpenAI, Cohere, Voyage) | `[llm]` |
 | `Doc2VecMetric` | `"doc2vec"` | Gensim Doc2Vec embeddings | `[doc2vec]` |
-| `AveragedWordVecMetric` | `"averagedwordvec"` | Averaged GloVe word vectors | `[doc2vec]` |
+| `AveragedWordVecMetric` | `"avgwordvec"` | Averaged GloVe word vectors | `[doc2vec]` |
 | `WMDMetric` | `"wmd"` | Word Mover's Distance | `[doc2vec]` |
-| `SoftCosineMetric` | `"softcosine"` | Soft cosine via word vector similarity | `[doc2vec]` |
+| `SoftCosineMetric` | `"soft_cosine"` | Soft cosine via word vector similarity | `[doc2vec]` |
 
 ### Statistical
 
@@ -250,10 +250,10 @@ metrics = [
 ```python
 # By passage index
 matches = results.top_k(42, metric="ngram", k=10)
-# → list of Match(score, passage1, passage2)
+# → list of Match(score, index, label, text)
 
-# By label (substring match)
-matches = results.top_k("1 Nephi 3:7", metric="ngram", k=10, labels=True)
+# By label string (exact match, then substring fallback)
+matches = results.top_k("1 Nephi 3:7", metric="ngram", k=10)
 
 # Return all passages ranked (k=None)
 matches = results.top_k(0, metric="ngram", k=None)
@@ -292,17 +292,17 @@ results.heatmap(metric="sentencetransformer", output="sem.png", xlabels=True, yl
 
 ### `diff`
 
-Compare two Results objects element-wise (e.g. BoM-KJV minus BoM-JST):
+Compare two Results objects element-wise for all shared metrics (e.g. BoM-KJV minus BoM-JST):
 
 ```python
-delta = results_bom_kjv.diff(results_bom_jst, metric="ngram")
-# → Results with matrix = kjv_matrix - jst_matrix
+delta = results_bom_kjv.diff(results_bom_jst)
+# → Results with matrices = kjv_matrix - jst_matrix for each shared metric
 ```
 
 ### `explain`
 
 ```python
-ev = results.explain(i=42, j=17, metric="ngram")
+ev = results.explain(42, 17, metric="ngram")
 # → {"score": 0.72, "common_ngrams": {4: {("and", "it", "came", "to"), ...}}}
 ```
 
@@ -375,6 +375,7 @@ collection = crossref.ResultsCollection.load("collection.h5")
 
 workers: 4   # parallel document-pair scoring threads (default: 1)
 
+# All-vs-all (N×N ResultsCollection):
 documents:
   - pathname: ~/texts/book_of_mormon.md
     splitter: line
@@ -382,10 +383,15 @@ documents:
   - pathname: ~/texts/kjv_new_testament.md
     splitter: line
 
-  # CSV, JSON, JSONL also supported:
-  # - pathname: ~/texts/verses.csv
-  #   text_column: text
-  #   label_column: reference
+# Or list × list (M×N ResultsCollection, avoids spurious self-pairs):
+# documents1:
+#   - pathname: ~/texts/genesis/
+#     splitter: line
+# documents2:
+#   - pathname: ~/texts/book_of_mormon.md
+#     splitter: line
+#   - pathname: ~/texts/kjv_new_testament.md
+#     splitter: line
 
 preprocessing:
   - replace_punctuation:

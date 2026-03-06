@@ -50,7 +50,7 @@ pdf = ["pypdf"]                                    # Document.from_file (.pdf)
 docx = ["python-docx"]                             # Document.from_file (.docx)
 html = ["beautifulsoup4"]                          # Document.from_file (.html/.htm)
 epub = ["ebooklib", "beautifulsoup4"]              # Document.from_file (.epub)
-dev = ["pytest", "coverage"]
+dev = ["pytest", "coverage", "h5py"]
 
 # List URLs that are relevant to your project (TODO)
 [project.urls]

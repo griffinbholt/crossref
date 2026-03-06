@@ -1,4 +1,5 @@
 import argparse
+import logging
 import os
 import yaml
 
@@ -6,13 +7,26 @@ from .documents import Document
 from .preprocessing import generate_preprocessing_pipeline
 from .compare import compare
 
+logger = logging.getLogger(__name__)
+
 
 def main():
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        datefmt="%H:%M:%S",
+    )
     args = parse_args()
+    logger.debug("Loading config: %s", args.config)
     config = load_config(args.config)
     preprocess_fn = generate_preprocessing_pipeline(config)
     docs1, docs2 = load_documents(config)
     metrics = load_metrics(config)
+    logger.info(
+        "Loaded %d metric(s): %s",
+        len(metrics),
+        ", ".join(m.name for m in metrics),
+    )
 
     results = compare(
         docs1,
@@ -31,13 +45,13 @@ def main():
             if id(d) not in seen:
                 seen.add(id(d))
                 all_docs.append(d)
-    print(f"Compared {len(all_docs)} document(s)")
+    logger.info("Comparison complete — %d document(s):", len(all_docs))
     for doc in all_docs:
-        print(f"  {doc.title}: {len(doc)} passages")
+        logger.info("  %s: %d passages", doc.title, len(doc))
 
     if args.output:
         results.save(args.output)
-        print(f"Results saved to {args.output}")
+        logger.info("Results saved to %s", args.output)
 
 
 def parse_args() -> argparse.Namespace:

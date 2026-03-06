@@ -1,8 +1,11 @@
+import logging
 import zlib
 
 import numpy as np
 
 from .base import SimilarityMetric
+
+logger = logging.getLogger(__name__)
 
 
 class StatisticalSimilarityMetric(SimilarityMetric):
@@ -50,6 +53,7 @@ class NCDMetric(StatisticalSimilarityMetric):
         return float(1.0 - ncd)
 
     def score_all(self, texts1: list[str], texts2: list[str]) -> np.ndarray:
+        logger.debug("NCDMetric.score_all: %dx%d (level=%d)", len(texts1), len(texts2), self.level)
         encoded1 = [t.encode() for t in texts1]
         encoded2 = [t.encode() for t in texts2]
         c1 = [len(zlib.compress(b, self.level)) for b in encoded1]
@@ -144,6 +148,7 @@ class TFIDFMetric(StatisticalSimilarityMetric):
         return (vecs @ vecs.T).toarray()
 
     def _fit_vectorizer(self, texts: list[str]):
+        logger.debug("TFIDFMetric: fitting vectorizer on %d texts", len(texts))
         from sklearn.feature_extraction.text import TfidfVectorizer
         vectorizer = TfidfVectorizer(
             analyzer=self.analyzer,
@@ -196,6 +201,7 @@ class BM25Metric(StatisticalSimilarityMetric):
         return float(self.score_all([text1], [text2])[0, 0])
 
     def score_all(self, texts1: list[str], texts2: list[str]) -> np.ndarray:
+        logger.debug("BM25Metric.score_all: %dx%d", len(texts1), len(texts2))
         from rank_bm25 import BM25Okapi
         tokenized1 = [self._tokenize(t) for t in texts1]
         tokenized2 = [self._tokenize(t) for t in texts2]
@@ -253,6 +259,7 @@ class LSAMetric(StatisticalSimilarityMetric):
         return vecs @ vecs.T
 
     def _fit_transform(self, texts: list[str]) -> np.ndarray:
+        logger.debug("LSAMetric: fitting on %d texts (n_components=%d)", len(texts), self.n_components)
         from sklearn.feature_extraction.text import TfidfVectorizer
         from sklearn.decomposition import TruncatedSVD
         from sklearn.preprocessing import normalize

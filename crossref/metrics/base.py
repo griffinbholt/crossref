@@ -1,6 +1,10 @@
+import logging
+
 import numpy as np
 
 from abc import ABC, abstractmethod
+
+logger = logging.getLogger(__name__)
 
 
 def _score_row(args: tuple) -> list:
@@ -44,6 +48,7 @@ class SimilarityMetric(ABC):
 
     def score_all(self, texts1: list[str], texts2: list[str], **kwargs) -> np.ndarray:
         """Default score_all implementation using score(). Override for efficiency."""
+        logger.debug("%s.score_all: %dx%d", self.__class__.__name__, len(texts1), len(texts2))
         return np.array([[self.score(t1, t2, **kwargs) for t2 in texts2] for t1 in texts1])
 
     def score_self(self, texts: list[str], **kwargs) -> np.ndarray:

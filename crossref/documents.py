@@ -1,10 +1,13 @@
 import csv
 import json
+import logging
 import os
 import re
 
 from dataclasses import dataclass
 from typing import Callable
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -223,16 +226,20 @@ class Document:
 
     @classmethod
     def _from_markdown(cls, path, splitter, title) -> 'Document':
+        logger.debug("Parsing markdown: %s", path)
         with open(path, 'r') as f:
             lines = [line.rstrip('\n') for line in f]
         doc_title = title or os.path.splitext(os.path.basename(path))[0]
         passages = _parse_markdown(lines, splitter)
         for i, p in enumerate(passages):
             p.index = i
-        return cls(passages, title=doc_title)
+        doc = cls(passages, title=doc_title)
+        logger.info("Loaded '%s': %d passages", doc_title, len(passages))
+        return doc
 
     @classmethod
     def _from_text(cls, path, splitter, title) -> 'Document':
+        logger.debug("Parsing text: %s", path)
         with open(path, 'r') as f:
             content = f.read()
         doc_title = title or os.path.splitext(os.path.basename(path))[0]
@@ -240,7 +247,9 @@ class Document:
         for t in _apply_splitter(content.splitlines(), splitter):
             if t.strip():
                 passages.append(Passage(text=t, index=len(passages)))
-        return cls(passages, title=doc_title)
+        doc = cls(passages, title=doc_title)
+        logger.info("Loaded '%s': %d passages", doc_title, len(passages))
+        return doc
 
     @classmethod
     def _from_pdf(cls, path, splitter, title) -> 'Document':
@@ -294,11 +303,14 @@ class Document:
     @classmethod
     def _from_directory(cls, path, splitter, title) -> 'Document':
         doc_title = title or _path_to_title(path)
+        logger.debug("Walking directory: %s", path)
         passages = []
         _walk_directory(path, passages, splitter, label_parts=[])
         for i, p in enumerate(passages):
             p.index = i
-        return cls(passages, title=doc_title)
+        doc = cls(passages, title=doc_title)
+        logger.info("Loaded '%s' (directory): %d passages", doc_title, len(passages))
+        return doc
 
 
 # ---------------------------------------------------------------------------
@@ -516,7 +528,7 @@ def _walk_directory(
                     if t.strip():
                         passages.append(Passage(text=t, index=0, label=label_prefix))
             except UnicodeDecodeError:
-                pass  # skip binary files
+                logger.warning("Skipping binary file (not UTF-8): %s", path)
 
 
 # ---------------------------------------------------------------------------

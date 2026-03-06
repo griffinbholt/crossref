@@ -1,9 +1,12 @@
+import logging
 from concurrent.futures import ThreadPoolExecutor
 from typing import Callable
 
 from .documents import Document
 from .metrics.base import SimilarityMetric
 from .results import Results, ResultsCollection
+
+logger = logging.getLogger(__name__)
 
 
 def compare(
@@ -59,6 +62,18 @@ def compare(
 
     single_output = single_input and (self_compare or len(docs2_list) == 1)
 
+    pairs = [
+        (i, j, doc1, doc2)
+        for i, doc1 in enumerate(docs1_list)
+        for j, doc2 in enumerate(docs2_list)
+    ]
+
+    metric_names = ", ".join(m.name for m in metrics)
+    logger.info(
+        "Starting comparison: %d pair(s), %d metric(s) [%s]",
+        len(pairs), len(metrics), metric_names,
+    )
+
     def _preprocess(texts: list[str]) -> list[str]:
         if preprocess_fn is None:
             return texts
@@ -67,12 +82,26 @@ def compare(
     def _score_pair(args: tuple[int, int, Document, Document]) -> tuple[tuple[int, int], Results]:
         i, j, doc1, doc2 = args
         if doc1 is doc2:
+            logger.info(
+                "Scoring (%d, %d): %s vs itself (%d passages)",
+                i, j, doc1.title, len(doc1),
+            )
             texts = _preprocess(doc1.texts())
-            matrices = {m.name: m.score_self(texts) for m in metrics}
+            matrices = {}
+            for m in metrics:
+                logger.debug("  Running %s (self)", m.name)
+                matrices[m.name] = m.score_self(texts)
         else:
+            logger.info(
+                "Scoring (%d, %d): %s (%d) vs %s (%d)",
+                i, j, doc1.title, len(doc1), doc2.title, len(doc2),
+            )
             texts1 = _preprocess(doc1.texts())
             texts2 = _preprocess(doc2.texts())
-            matrices = {m.name: m.score_all(texts1, texts2) for m in metrics}
+            matrices = {}
+            for m in metrics:
+                logger.debug("  Running %s (%dx%d)", m.name, len(texts1), len(texts2))
+                matrices[m.name] = m.score_all(texts1, texts2)
         return (i, j), Results(
             passages1=doc1.passages, passages2=doc2.passages,
             matrices=matrices, doc1_title=doc1.title, doc2_title=doc2.title,
@@ -80,21 +109,18 @@ def compare(
             preprocessing_config=preprocessing_config,
         )
 
-    pairs = [
-        (i, j, doc1, doc2)
-        for i, doc1 in enumerate(docs1_list)
-        for j, doc2 in enumerate(docs2_list)
-    ]
-
     pair_results: dict[tuple[int, int], Results] = {}
     if workers == 1 or len(pairs) == 1:
         for args in pairs:
             key, result = _score_pair(args)
             pair_results[key] = result
     else:
+        logger.debug("Using ThreadPoolExecutor with %d workers", min(workers, len(pairs)))
         with ThreadPoolExecutor(max_workers=min(workers, len(pairs))) as ex:
             for key, result in ex.map(_score_pair, pairs):
                 pair_results[key] = result
+
+    logger.info("Comparison complete.")
 
     if single_output:
         return pair_results[(0, 0)]
