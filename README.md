@@ -1,5 +1,9 @@
 # CrossRef
 
+[![Tests](https://github.com/griffinbholt/crossref/actions/workflows/tests.yml/badge.svg)](https://github.com/griffinbholt/crossref/actions/workflows/tests.yml)
+[![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
 CrossRef is a Python library and CLI for automated document cross-referencing. Given any two documents, it finds textually similar passage pairs using a suite of syntactic, semantic, and statistical similarity metrics.
 
 **Primary use case:** comparing scriptural texts (Book of Mormon, KJV Bible, D&C, JST, etc.) — but it works on any plain text, Markdown, or structured document format.
